@@ -5,7 +5,7 @@ smtp_server = ""
 smtp_toaddrs = ["User <example@example.com>"]
 
 # Slack WebHook for notification
-slack_webhook_url = "https://hooks.slack.com/services/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"
+slack_webhook_url = "https://hooks.slack.com/services/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"
 
 # Telegram Token and ChatID for notification
 telegram_bot_token = ""
