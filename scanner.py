@@ -57,14 +57,20 @@ MODELOS_ESPECIFICOS = [
 
 # ── PALABRAS NEGATIVAS ────────────────────────────────────────────────────────
 NEGATIVOS = [
-    'compatible', 'reciclado', 'remanufacturado', 'generico', 'relleno',
-    'rellenar', 'refill', 'chip reset', 'busco', 'se busca', 'wanted',
-    'impresora vendo', 'multifuncion vendo', 'compro', 'busco toner',
+    # ES
+    'compatible', 'compatibles', 'reciclado', 'reciclados',
+    'remanufacturado', 'remanufacturados', 'generico', 'genericos',
+    'relleno', 'rellenado', 'rellenar', 'refill', 'chip reset',
+    'busco', 'se busca', 'wanted', 'compro', 'busco toner',
+    'usado', 'usados', 'vacío', 'vacíos',
+    # FR
+    'compatible', 'recyclé', 'rechargé', 'remanufacturé',
+    'generique', 'cherche', 'recherche',
 ]
 
 # ── FILTRO DE PRECIO ──────────────────────────────────────────────────────────
-PRECIO_MIN = 5     # ignorar anuncios por debajo de 5€ (basura/gastos envío)
-PRECIO_MAX = 2000  # ignorar anuncios absurdamente caros
+PRECIO_MIN = 0     # sin filtro de precio mínimo
+PRECIO_MAX = 9999  # sin filtro de precio máximo
 
 # ── HEADERS ───────────────────────────────────────────────────────────────────
 HEADERS_BASE = {
@@ -96,11 +102,7 @@ def tiene_negativo(titulo):
     return any(neg in tl for neg in NEGATIVOS)
 
 def precio_valido(precio):
-    try:
-        p = float(precio)
-        return PRECIO_MIN <= p <= PRECIO_MAX
-    except:
-        return True  # si no hay precio, dejar pasar
+    return True  # Sin filtro de precio — Tomás decide
 
 # ── WALLAPOP ──────────────────────────────────────────────────────────────────
 def buscar_wallapop(termino):
@@ -230,7 +232,7 @@ def main():
 
         # Buscar en las tres plataformas
         anuncios = []
-        anuncios += buscar_wallapop(termino)
+        # anuncios += buscar_wallapop(termino)  # Desactivado — HTTP 403 desde GitHub Actions
         anuncios += buscar_vinted(termino, 'vinted.es', cookies_vinted_es)
         anuncios += buscar_vinted(termino, 'vinted.pt', cookies_vinted_pt)
 
