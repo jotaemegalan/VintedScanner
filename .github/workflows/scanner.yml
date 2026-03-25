@@ -1,0 +1,44 @@
+name: Recotinta Scanner
+
+on:
+  schedule:
+    # Cada 30 minutos, solo en horario laboral (7-20h UTC = 9-22h España)
+    - cron: '*/30 7-20 * * 1-6'
+  workflow_dispatch:  # permite ejecutar manualmente desde GitHub
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Restore seen IDs cache
+        uses: actions/cache@v4
+        with:
+          path: seen_ids.json
+          key: seen-ids-${{ github.run_number }}
+          restore-keys: |
+            seen-ids-
+
+      - name: Run scanner
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python scanner.py
+
+      - name: Save seen IDs cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: seen_ids.json
+          key: seen-ids-${{ github.run_number }}
