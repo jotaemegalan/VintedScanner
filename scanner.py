@@ -260,11 +260,14 @@ def main():
                 continue
 
             # Enviar alerta
+            log.info(f"NUEVO anuncio: [{anuncio['plataforma']}] {anuncio['titulo'][:50]} — {anuncio['precio']}€")
             msg = formatear_mensaje(anuncio, termino)
             if enviar_telegram(msg):
                 alertas_enviadas += 1
-                log.info(f"Alerta enviada: {anuncio['titulo'][:50]} — {anuncio['precio']}€")
+                log.info(f"✅ Telegram enviado: {anuncio['titulo'][:50]}")
                 time.sleep(0.5)  # pausa anti-spam Telegram
+            else:
+                log.error(f"❌ Telegram FALLÓ: {anuncio['titulo'][:50]}")
 
         # Pausa entre búsquedas
         time.sleep(0.8)
