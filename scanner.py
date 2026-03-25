@@ -17,7 +17,7 @@ TELEGRAM_TOKEN  = os.environ.get('TELEGRAM_TOKEN', '')
 TELEGRAM_CHAT   = os.environ.get('TELEGRAM_CHAT_ID', '')
 SEEN_FILE       = 'seen_ids.json'
 MAX_SEEN        = 3000
-MAX_ALERTAS_RUN = 15   # máximo de alertas por ejecución (anti-spam)
+MAX_ALERTAS_RUN = 50   # máximo de alertas por ejecución
 
 logging.basicConfig(
     level=logging.INFO,
@@ -172,12 +172,19 @@ def buscar_vinted(termino, dominio='vinted.es', cookies=None):
             precio = item.get('price', {})
             if isinstance(precio, dict):
                 precio = precio.get('amount', 0)
+            # Extraer URL de imagen
+            foto = ''
+            photo = item.get('photo', {})
+            if isinstance(photo, dict):
+                foto = photo.get('full_size_url', photo.get('url', ''))
             result.append({
                 'id': f'vt_{dominio}_{item.get("id","")}',
                 'titulo': item.get('title', ''),
+                'descripcion': item.get('description', ''),
                 'precio': float(precio) if precio else 0,
                 'link': item.get('url', f'https://www.{dominio}/items/{item.get("id","")}'),
                 'plataforma': f'{emoji} {nombre}',
+                'foto': foto,
             })
         return result
     except Exception as e:
@@ -185,17 +192,31 @@ def buscar_vinted(termino, dominio='vinted.es', cookies=None):
         return []
 
 # ── TELEGRAM ──────────────────────────────────────────────────────────────────
-def enviar_telegram(texto):
+def enviar_telegram(texto, foto_url=''):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT:
         log.error("Telegram no configurado")
         return False
-    url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
     try:
+        if foto_url:
+            # Enviar foto con caption
+            url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendPhoto'
+            r = requests.post(url, json={
+                'chat_id': TELEGRAM_CHAT,
+                'photo': foto_url,
+                'caption': texto,
+                'parse_mode': 'HTML',
+            }, timeout=10)
+            result = r.json()
+            if result.get('ok'):
+                return True
+            # Si falla la foto, enviar solo texto
+        # Enviar solo texto
+        url = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage'
         r = requests.post(url, json={
             'chat_id': TELEGRAM_CHAT,
             'text': texto,
             'parse_mode': 'HTML',
-            'disable_web_page_preview': True,
+            'disable_web_page_preview': False,
         }, timeout=10)
         return r.json().get('ok', False)
     except Exception as e:
@@ -252,7 +273,9 @@ def main():
             # Filtros
             if not anuncio['titulo']:
                 continue
-            if tiene_negativo(anuncio['titulo']):
+            # Comprobar negativos en título Y descripción
+            texto_completo = anuncio['titulo'] + ' ' + anuncio.get('descripcion', '')
+            if tiene_negativo(texto_completo):
                 log.info(f"Filtrado negativo: {anuncio['titulo'][:50]}")
                 continue
             if not precio_valido(anuncio['precio']):
@@ -260,14 +283,13 @@ def main():
                 continue
 
             # Enviar alerta
-            log.info(f"NUEVO anuncio: [{anuncio['plataforma']}] {anuncio['titulo'][:50]} — {anuncio['precio']}€")
             msg = formatear_mensaje(anuncio, termino)
-            if enviar_telegram(msg):
+            if enviar_telegram(msg, anuncio.get('foto', '')):
                 alertas_enviadas += 1
-                log.info(f"✅ Telegram enviado: {anuncio['titulo'][:50]}")
+                log.info(f"✅ {anuncio['plataforma']} — {anuncio['titulo'][:50]} — {anuncio['precio']}€")
                 time.sleep(0.5)  # pausa anti-spam Telegram
             else:
-                log.error(f"❌ Telegram FALLÓ: {anuncio['titulo'][:50]}")
+                log.error(f"❌ Telegram falló: {anuncio['titulo'][:50]}")
 
         # Pausa entre búsquedas
         time.sleep(0.8)
