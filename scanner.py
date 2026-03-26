@@ -57,15 +57,36 @@ MODELOS_ESPECIFICOS = [
 
 # ── PALABRAS NEGATIVAS ────────────────────────────────────────────────────────
 NEGATIVOS = [
-    # ES
+    # Consumibles no originales
     'compatible', 'compatibles', 'reciclado', 'reciclados',
     'remanufacturado', 'remanufacturados', 'generico', 'genericos',
     'relleno', 'rellenado', 'rellenar', 'refill', 'chip reset',
     'busco', 'se busca', 'wanted', 'compro', 'busco toner',
     'usado', 'usados', 'vacío', 'vacíos',
+    # Ropa y moda
+    'ropa', 'camiseta', 'pantalon', 'pantalón', 'vestido', 'camisa',
+    'blusa', 'chaqueta', 'abrigo', 'zapatos', 'zapatillas', 'bolso',
+    'moda', 'outfit', 'jersey', 'falda', 'sudadera', 'vaqueros',
+    'prendas', 'tallas', 'kiabi', 'zara', 'h&m', 'mango',
+    'bebé', 'bebe', 'niño', 'nino', 'infantil',
+    # Cosmética y belleza
+    'belleza', 'cosmetica', 'cosmética', 'crema', 'serum', 'sérum',
+    'maquillaje', 'perfume', 'colonia', 'labial', 'capilar',
+    'skincare', 'beauty', 'tónico facial', 'tonico facial',
+    'mascarilla', 'hidratante', 'acondicionador',
+    # Arte y hobby
+    'acuarela', 'pintura', 'oleo', 'óleo', 'scrapbooking',
+    'yugioh', 'yu-gi-oh', 'pokemon', 'carta ', 'cartas ',
+    'boosters', 'booster', 'figuras', 'pegatinas',
+    # Hogar y otros
+    'copas', 'cristal', 'libro', 'libros', 'sorpresa', 'misterio',
+    'jogging', 'streetwear', 'vintage tela', 'tela ',
+    'camisolas', 'bodys', 'conjuntos ropa',
     # FR
-    'compatible', 'recyclé', 'rechargé', 'remanufacturé',
-    'generique', 'cherche', 'recherche',
+    'recyclé', 'rechargé', 'remanufacturé', 'generique',
+    'cherche', 'recherche', 'vetement', 'vêtement', 'robe',
+    'ensemble bébé', 'pièces fille', 'pull ', 'blouse ',
+    'boutons couture', 'pellicule', 'porte-clés',
 ]
 
 # ── FILTRO DE PRECIO ──────────────────────────────────────────────────────────
@@ -178,7 +199,7 @@ def buscar_vinted(termino, dominio='vinted.es', cookies=None):
             if isinstance(photo, dict):
                 foto = photo.get('full_size_url', photo.get('url', ''))
             result.append({
-                'id': f'vt_{dominio}_{item.get("id","")}',
+                'id': f'vt_{item.get("id","")}',  # sin dominio para evitar duplicados ES/PT
                 'titulo': item.get('title', ''),
                 'descripcion': item.get('description', ''),
                 'precio': float(precio) if precio else 0,
