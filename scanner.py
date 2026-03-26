@@ -87,7 +87,7 @@ NEGATIVOS = [
     'coreano', 'coreana', 'arroz', 'hair', 'cabello', 'pelo',
     'micellar', 'hidratacion', 'hidratación', 'esencia toner',
     'rice toner', 'barrier', 'glazer', 'pyunkang', 'revuele',
-    'sibari', 'kiehl', 'sisley', 'loreal', 'l'oreal',
+    'sibari', 'kiehl', 'sisley', 'loreal', 'loreal',
     'schwarzkopf', 'naturtint', 'decoloracion', 'decoloración',
     'tinte pelo', 'tinte cabello', 'tintes peluqueria',
     'neceser', 'muestras', 'muestra ',
