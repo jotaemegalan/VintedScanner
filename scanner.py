@@ -82,6 +82,21 @@ NEGATIVOS = [
     'copas', 'cristal', 'libro', 'libros', 'sorpresa', 'misterio',
     'jogging', 'streetwear', 'vintage tela', 'tela ',
     'camisolas', 'bodys', 'conjuntos ropa',
+    # Cosmética — toner facial / tónico
+    'tónico', 'tonico', 'facial', 'skincare', 'k-beauty', 'kbeauty',
+    'coreano', 'coreana', 'arroz', 'hair', 'cabello', 'pelo',
+    'micellar', 'hidratacion', 'hidratación', 'esencia toner',
+    'rice toner', 'barrier', 'glazer', 'pyunkang', 'revuele',
+    'sibari', 'kiehl', 'sisley', 'loreal', 'l'oreal',
+    'schwarzkopf', 'naturtint', 'decoloracion', 'decoloración',
+    'tinte pelo', 'tinte cabello', 'tintes peluqueria',
+    'neceser', 'muestras', 'muestra ',
+    # Videojuegos y electrónica
+    'nintendo', 'switch', 'gameboy', 'game boy', 'sega',
+    'famicom', 'gba', '3ds', 'sonic', 'kirby', 'dragon ball',
+    'mahjong', 'aladdin', 'rayman', 'astroboy', 'pokémon',
+    'pokemon', 'mega drive', 'super famicom', 'microfono',
+    'micrófono', 'camara', 'cámara', 'philips lumea',
     # FR
     'recyclé', 'rechargé', 'remanufacturé', 'generique',
     'cherche', 'recherche', 'vetement', 'vêtement', 'robe',
@@ -308,7 +323,7 @@ def main():
             if enviar_telegram(msg, anuncio.get('foto', '')):
                 alertas_enviadas += 1
                 log.info(f"✅ {anuncio['plataforma']} — {anuncio['titulo'][:50]} — {anuncio['precio']}€")
-                time.sleep(0.5)  # pausa anti-spam Telegram
+                time.sleep(1.5)  # pausa anti-spam Telegram
             else:
                 log.error(f"❌ Telegram falló: {anuncio['titulo'][:50]}")
 
