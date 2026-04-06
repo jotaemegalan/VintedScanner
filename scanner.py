@@ -50,35 +50,21 @@ TERMINOS_WALLAPOP = [
     '407635', '842024', '406482', '406349',
 ]
 
-# Vinted: cada término lleva su catalog_ids para filtrar categoría
-# catalog_ids=2637 → Periféricos e impresoras
-# catalog_ids=2530 → Electrónica general
-# Sin estos filtros, "cartucho" devuelve videojuegos y "tambor" devuelve instrumentos
+# Vinted: sin filtro de categoría — catalog_ids eliminados porque los IDs
+# disponibles públicamente no corresponden a la categoría correcta y
+# fuerzan resultados de otras familias (ropa, moda...)
+# Los términos específicos + palabras negativas son suficiente filtro
 TERMINOS_VINTED = [
-    # Periféricos/impresoras (2637)
-    {'q': 'cartucho',          'catalog_ids': '2637'},
-    {'q': 'cartuchos',         'catalog_ids': '2637'},
-    {'q': 'toner',             'catalog_ids': '2637'},
-    {'q': 'laserjet',          'catalog_ids': '2637'},
-    {'q': 'toner hp',          'catalog_ids': '2637'},
-    {'q': 'toner brother',     'catalog_ids': '2637'},
-    {'q': 'toner canon',       'catalog_ids': '2637'},
-    {'q': 'toner kyocera',     'catalog_ids': '2637'},
-    {'q': 'toner ricoh',       'catalog_ids': '2637'},
-    {'q': 'toner xerox',       'catalog_ids': '2637'},
-    {'q': 'toner lexmark',     'catalog_ids': '2637'},
-    {'q': 'toner original',    'catalog_ids': '2637'},
-    {'q': 'cartucho original', 'catalog_ids': '2637'},
-    # Electrónica general (2530) — tambor da resultados de instrumentos sin filtro
-    {'q': 'tambor',            'catalog_ids': '2530'},
-    {'q': 'tambor impresora',  'catalog_ids': '2530'},
-    # Modelos con filtro electrónica
-    {'q': 'CF410X',  'catalog_ids': '2530'},
-    {'q': 'CF226X',  'catalog_ids': '2530'},
-    {'q': 'CE505X',  'catalog_ids': '2530'},
-    {'q': 'TN910',   'catalog_ids': '2530'},
-    {'q': 'TK5240',  'catalog_ids': '2530'},
-    {'q': 'TK8115',  'catalog_ids': '2530'},
+    # Genéricos — suficientemente específicos para impresión
+    'toner', 'toner original', 'toner impresora',
+    'toner hp', 'toner brother', 'toner canon',
+    'toner kyocera', 'toner ricoh', 'toner xerox', 'toner lexmark',
+    'cartucho impresora', 'lote toner', 'lote cartuchos',
+    'tambor impresora',
+    # Modelos específicos — inequívocos
+    'CF410X', 'CF226X', 'CE505X', 'CF283X',
+    'TN910', 'TN3520', 'TK5240', 'TK8115', 'TK5305',
+    'C950X2', 'CEXV34', '407635',
 ]
 
 # ── PALABRAS NEGATIVAS ────────────────────────────────────────────────────────
@@ -128,13 +114,23 @@ NEGATIVOS = [
     'cherche', 'recherche', 'vetement', 'vêtement', 'robe',
     'ensemble bébé', 'pièces fille', 'pull ', 'blouse ',
     'boutons couture', 'pellicule', 'porte-clés',
-    # Videojuegos — cartucho de videojuego es el más problemático
+    # Videojuegos
     'cartucho juego', 'cartucho nintendo', 'cartucho sega',
     'cartucho gba', 'cartucho nds', 'cartucho n64',
     'playstation', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5',
     'xbox', 'game boy', 'gameboy', 'nds', 'gba', 'n64',
     'snes', 'nes ', 'mega drive', 'master system',
     'retro juego', 'videojuego', 'video juego',
+    # Móviles y fundas — "lote kyocera" da móviles
+    'funda', 'fundas', 'carcasa', 'movil', 'móvil', 'smartphone',
+    'iphone', 'samsung', 'nokia', 'motorola', 'huawei', 'xiaomi',
+    'telefono', 'teléfono', 'tablet',
+    # Moda adicional
+    'cazadora', 'esquí', 'esqui', 'chaqueta esqui',
+    'deportiva', 'running', 'trekking', 'ciclismo',
+    # Precios absurdos (señal de artículo incorrecto)
+    # No filtramos por precio pero añadimos palabras clave
+    'decoracion', 'decoración', 'cuadro', 'lampara', 'lámpara',
 ]
 
 # ── FILTRO DE PRECIO ──────────────────────────────────────────────────────────
@@ -218,15 +214,13 @@ def obtener_cookies_vinted(dominio):
     except:
         return {}
 
-def buscar_vinted(termino, dominio='vinted.es', cookies=None, catalog_ids=None):
+def buscar_vinted(termino, dominio='vinted.es', cookies=None):
     url = f'https://www.{dominio}/api/v2/catalog/items'
     params = {
         'search_text': termino,
         'order': 'newest_first',
         'per_page': 20,
     }
-    if catalog_ids:
-        params['catalog_ids[]'] = catalog_ids
     try:
         headers = {**HEADERS_BASE, 'Referer': f'https://www.{dominio}/'}
         r = requests.get(url, params=params, headers=headers,
@@ -320,18 +314,15 @@ def main():
     #     anuncios = buscar_wallapop(termino)
     #     ... procesar anuncios
 
-    # ── Vinted con catalog_ids por término ────────────────────────────────────
-    for item in TERMINOS_VINTED:
+    # ── Vinted ────────────────────────────────────────────────────────────────
+    for termino in TERMINOS_VINTED:
         if alertas_enviadas >= MAX_ALERTAS_RUN:
             log.info(f"Límite de {MAX_ALERTAS_RUN} alertas alcanzado")
             break
 
-        termino     = item['q']
-        catalog_ids = item.get('catalog_ids')
-
         anuncios = []
-        anuncios += buscar_vinted(termino, 'vinted.es', cookies_vinted_es, catalog_ids)
-        anuncios += buscar_vinted(termino, 'vinted.pt', cookies_vinted_pt, catalog_ids)
+        anuncios += buscar_vinted(termino, 'vinted.es', cookies_vinted_es)
+        anuncios += buscar_vinted(termino, 'vinted.pt', cookies_vinted_pt)
 
         for anuncio in anuncios:
             if alertas_enviadas >= MAX_ALERTAS_RUN:
