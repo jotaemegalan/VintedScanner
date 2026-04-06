@@ -26,33 +26,59 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ── TÉRMINOS DE BÚSQUEDA ──────────────────────────────────────────────────────
-# Separados en grupos para rotar y no lanzar todo cada vez
-TERMINOS_GENERICOS = [
-    'lote toner', 'lote tinta', 'toner original lote',
-    'cartucho original', 'toner precintado', 'toner sin usar',
-    'consumibles impresora', 'lote consumibles',
+# Wallapop: sin filtro de categoría, términos directos
+TERMINOS_WALLAPOP = [
+    # Confirmados por Tomás
+    'toner', 'cartucho', 'laserjet',
+    # Genéricos
+    'lote toner', 'toner original', 'cartucho original', 'tambor impresora',
+    # Por marca
+    'toner hp', 'toner brother', 'toner canon', 'toner lexmark',
+    'toner kyocera', 'toner ricoh', 'toner oki', 'toner xerox',
+    'lote hp', 'lote brother', 'lote canon', 'lote lexmark',
+    # Modelos Brother
+    'TN910', 'TN326', 'TN3520', 'TN423', 'TN426', 'TN247',
+    # Modelos HP
+    'CF410X', 'CE390X', 'CF325X', 'CE505X', 'CF283X', 'CF226X',
+    # Modelos Lexmark
+    'C950X2', 'C792X1', 'C780H1', 'C746H1', 'C748H1',
+    # Modelos Canon
+    'CEXV34', 'CEXV33', 'CEXV21', 'CEXV18', 'CEXV14',
+    # Modelos Kyocera
+    'TK8115', 'TK5305', 'TK5240', 'TK5280', 'TK1170',
+    # Modelos Ricoh
+    '407635', '842024', '406482', '406349',
 ]
 
-TERMINOS_MARCA = [
-    'toner hp original', 'toner brother original', 'toner canon original',
-    'toner lexmark original', 'toner kyocera original', 'toner ricoh original',
-    'toner oki original', 'toner xerox original',
-    'lote hp', 'lote brother', 'lote canon', 'lote kyocera', 'lote ricoh',
-]
-
-MODELOS_ESPECIFICOS = [
-    # Brother
-    'TN910', 'TN326', 'TN329', 'TN3520', 'TN423', 'TN426', 'TN245', 'TN247',
-    # HP
-    'CF410X', 'CE390X', 'CF325X', 'CE505X', 'Q7551X', 'CF283X', 'CE285X', 'CF226X',
-    # Lexmark
-    'C950X2', '24B6015', 'C792X1', 'C780H1', 'C540H1', 'C544X1', 'C746H1', 'C748H1',
-    # Canon
-    'CEXV34', 'CEXV33', 'CEXV21', 'CEXV18', 'CEXV14', 'CEXV17', '719H',
-    # Kyocera
-    'TK8115', 'TK5305', 'TK5240', 'TK3190', 'TK5280', 'TK5270', 'TK1170', 'TK3130',
-    # Ricoh
-    '407635', '842024', '406482', '406475', '406349', '406052', '407246', '406837',
+# Vinted: cada término lleva su catalog_ids para filtrar categoría
+# catalog_ids=2637 → Periféricos e impresoras
+# catalog_ids=2530 → Electrónica general
+# Sin estos filtros, "cartucho" devuelve videojuegos y "tambor" devuelve instrumentos
+TERMINOS_VINTED = [
+    # Periféricos/impresoras (2637)
+    {'q': 'cartucho',          'catalog_ids': '2637'},
+    {'q': 'cartuchos',         'catalog_ids': '2637'},
+    {'q': 'toner',             'catalog_ids': '2637'},
+    {'q': 'laserjet',          'catalog_ids': '2637'},
+    {'q': 'toner hp',          'catalog_ids': '2637'},
+    {'q': 'toner brother',     'catalog_ids': '2637'},
+    {'q': 'toner canon',       'catalog_ids': '2637'},
+    {'q': 'toner kyocera',     'catalog_ids': '2637'},
+    {'q': 'toner ricoh',       'catalog_ids': '2637'},
+    {'q': 'toner xerox',       'catalog_ids': '2637'},
+    {'q': 'toner lexmark',     'catalog_ids': '2637'},
+    {'q': 'toner original',    'catalog_ids': '2637'},
+    {'q': 'cartucho original', 'catalog_ids': '2637'},
+    # Electrónica general (2530) — tambor da resultados de instrumentos sin filtro
+    {'q': 'tambor',            'catalog_ids': '2530'},
+    {'q': 'tambor impresora',  'catalog_ids': '2530'},
+    # Modelos con filtro electrónica
+    {'q': 'CF410X',  'catalog_ids': '2530'},
+    {'q': 'CF226X',  'catalog_ids': '2530'},
+    {'q': 'CE505X',  'catalog_ids': '2530'},
+    {'q': 'TN910',   'catalog_ids': '2530'},
+    {'q': 'TK5240',  'catalog_ids': '2530'},
+    {'q': 'TK8115',  'catalog_ids': '2530'},
 ]
 
 # ── PALABRAS NEGATIVAS ────────────────────────────────────────────────────────
@@ -102,6 +128,13 @@ NEGATIVOS = [
     'cherche', 'recherche', 'vetement', 'vêtement', 'robe',
     'ensemble bébé', 'pièces fille', 'pull ', 'blouse ',
     'boutons couture', 'pellicule', 'porte-clés',
+    # Videojuegos — cartucho de videojuego es el más problemático
+    'cartucho juego', 'cartucho nintendo', 'cartucho sega',
+    'cartucho gba', 'cartucho nds', 'cartucho n64',
+    'playstation', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5',
+    'xbox', 'game boy', 'gameboy', 'nds', 'gba', 'n64',
+    'snes', 'nes ', 'mega drive', 'master system',
+    'retro juego', 'videojuego', 'video juego',
 ]
 
 # ── FILTRO DE PRECIO ──────────────────────────────────────────────────────────
@@ -185,13 +218,15 @@ def obtener_cookies_vinted(dominio):
     except:
         return {}
 
-def buscar_vinted(termino, dominio='vinted.es', cookies=None):
+def buscar_vinted(termino, dominio='vinted.es', cookies=None, catalog_ids=None):
     url = f'https://www.{dominio}/api/v2/catalog/items'
     params = {
         'search_text': termino,
         'order': 'newest_first',
         'per_page': 20,
     }
+    if catalog_ids:
+        params['catalog_ids[]'] = catalog_ids
     try:
         headers = {**HEADERS_BASE, 'Referer': f'https://www.{dominio}/'}
         r = requests.get(url, params=params, headers=headers,
@@ -279,19 +314,24 @@ def main():
     cookies_vinted_es = obtener_cookies_vinted('vinted.es')
     cookies_vinted_pt = obtener_cookies_vinted('vinted.pt')
 
-    # Combinar todos los términos
-    todos_terminos = TERMINOS_GENERICOS + TERMINOS_MARCA + MODELOS_ESPECIFICOS
+    # ── Wallapop (desactivado — HTTP 403 desde GitHub Actions) ──────────────
+    # for termino in TERMINOS_WALLAPOP:
+    #     if alertas_enviadas >= MAX_ALERTAS_RUN: break
+    #     anuncios = buscar_wallapop(termino)
+    #     ... procesar anuncios
 
-    for termino in todos_terminos:
+    # ── Vinted con catalog_ids por término ────────────────────────────────────
+    for item in TERMINOS_VINTED:
         if alertas_enviadas >= MAX_ALERTAS_RUN:
             log.info(f"Límite de {MAX_ALERTAS_RUN} alertas alcanzado")
             break
 
-        # Buscar en las tres plataformas
+        termino     = item['q']
+        catalog_ids = item.get('catalog_ids')
+
         anuncios = []
-        # anuncios += buscar_wallapop(termino)  # Desactivado — HTTP 403 desde GitHub Actions
-        anuncios += buscar_vinted(termino, 'vinted.es', cookies_vinted_es)
-        anuncios += buscar_vinted(termino, 'vinted.pt', cookies_vinted_pt)
+        anuncios += buscar_vinted(termino, 'vinted.es', cookies_vinted_es, catalog_ids)
+        anuncios += buscar_vinted(termino, 'vinted.pt', cookies_vinted_pt, catalog_ids)
 
         for anuncio in anuncios:
             if alertas_enviadas >= MAX_ALERTAS_RUN:
