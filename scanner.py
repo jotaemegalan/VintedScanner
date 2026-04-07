@@ -26,111 +26,73 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ── TÉRMINOS DE BÚSQUEDA ──────────────────────────────────────────────────────
-# Wallapop: sin filtro de categoría, términos directos
+# Nota: modelos específicos descartados por Tomás — hay cientos, mejor
+# usar términos generales y filtrar por título.
+# El filtro titulo_es_relevante() garantiza que solo pasen anuncios reales.
+
 TERMINOS_WALLAPOP = [
     # Confirmados por Tomás
     'toner', 'cartucho', 'laserjet',
+    # Variantes ortográficas
+    'tonner', 'tóner', 'toners',
     # Genéricos
-    'lote toner', 'toner original', 'cartucho original', 'tambor impresora',
+    'lote toner', 'lote tinta', 'lote tonners',
+    'toner original', 'cartucho original', 'tinta original',
+    'tambor impresora', 'fusor impresora',
+    'ink', 'inks', 'drums', 'cartouche',
+    'impresora original', 'consumibles impresora',
+    # Por marca (término + marca = muy específico)
+    'toner hp', 'toner brother', 'toner canon', 'toner lexmark',
+    'toner kyocera', 'toner ricoh', 'toner oki', 'toner xerox',
+    # Marcas solas (Tomás las confirmó como términos válidos)
+    'brother toner', 'lexmark toner', 'kyocera toner',
+    'ricoh toner', 'oki toner',
+    # Lotes por marca
+    'lote hp', 'lote brother', 'lote canon', 'lote lexmark',
+    'lote kyocera', 'lote ricoh',
+]
+
+TERMINOS_VINTED = [
+    # Confirmados por Tomás
+    'toner', 'cartucho', 'laserjet',
+    # Variantes ortográficas
+    'tonner', 'tóner', 'toners',
+    # Genéricos
+    'lote toner', 'lote tinta', 'lote tonners',
+    'toner original', 'cartucho original', 'tinta original',
+    'tambor impresora', 'fusor impresora',
+    'ink', 'inks', 'drums', 'cartouche',
+    'impresora original', 'consumibles impresora',
     # Por marca
     'toner hp', 'toner brother', 'toner canon', 'toner lexmark',
     'toner kyocera', 'toner ricoh', 'toner oki', 'toner xerox',
-    'lote hp', 'lote brother', 'lote canon', 'lote lexmark',
-    # Modelos Brother
-    'TN910', 'TN326', 'TN3520', 'TN423', 'TN426', 'TN247',
-    # Modelos HP
-    'CF410X', 'CE390X', 'CF325X', 'CE505X', 'CF283X', 'CF226X',
-    # Modelos Lexmark
-    'C950X2', 'C792X1', 'C780H1', 'C746H1', 'C748H1',
-    # Modelos Canon
-    'CEXV34', 'CEXV33', 'CEXV21', 'CEXV18', 'CEXV14',
-    # Modelos Kyocera
-    'TK8115', 'TK5305', 'TK5240', 'TK5280', 'TK1170',
-    # Modelos Ricoh
-    '407635', '842024', '406482', '406349',
-]
-
-# Vinted: sin filtro de categoría — catalog_ids eliminados porque los IDs
-# disponibles públicamente no corresponden a la categoría correcta y
-# fuerzan resultados de otras familias (ropa, moda...)
-# Los términos específicos + palabras negativas son suficiente filtro
-TERMINOS_VINTED = [
-    # Genéricos — suficientemente específicos para impresión
-    'toner', 'toner original', 'toner impresora',
-    'toner hp', 'toner brother', 'toner canon',
-    'toner kyocera', 'toner ricoh', 'toner xerox', 'toner lexmark',
-    'cartucho impresora', 'lote toner', 'lote cartuchos',
-    'tambor impresora',
-    # Modelos específicos — inequívocos
-    'CF410X', 'CF226X', 'CE505X', 'CF283X',
-    'TN910', 'TN3520', 'TK5240', 'TK8115', 'TK5305',
-    'C950X2', 'CEXV34', '407635',
+    # Lotes por marca
+    'lote hp', 'lote brother', 'lote canon',
+    'lote kyocera', 'lote ricoh',
 ]
 
 # ── PALABRAS NEGATIVAS ────────────────────────────────────────────────────────
+# El filtro principal es titulo_es_relevante() — aquí solo los esenciales.
+# Confirmados por Tomás desde el inicio + los más críticos vistos en pruebas.
 NEGATIVOS = [
-    # Consumibles no originales
-    'compatible', 'compatibles', 'reciclado', 'reciclados',
-    'remanufacturado', 'remanufacturados', 'generico', 'genericos',
-    'relleno', 'rellenado', 'rellenar', 'refill', 'chip reset',
-    'busco', 'se busca', 'wanted', 'compro', 'busco toner',
-    'usado', 'usados', 'vacío', 'vacíos',
-    # Ropa y moda
-    'ropa', 'camiseta', 'pantalon', 'pantalón', 'vestido', 'camisa',
-    'blusa', 'chaqueta', 'abrigo', 'zapatos', 'zapatillas', 'bolso',
-    'moda', 'outfit', 'jersey', 'falda', 'sudadera', 'vaqueros',
-    'prendas', 'tallas', 'kiabi', 'zara', 'h&m', 'mango',
-    'bebé', 'bebe', 'niño', 'nino', 'infantil',
-    # Cosmética y belleza
-    'belleza', 'cosmetica', 'cosmética', 'crema', 'serum', 'sérum',
-    'maquillaje', 'perfume', 'colonia', 'labial', 'capilar',
-    'skincare', 'beauty', 'tónico facial', 'tonico facial',
-    'mascarilla', 'hidratante', 'acondicionador',
-    # Arte y hobby
-    'acuarela', 'pintura', 'oleo', 'óleo', 'scrapbooking',
-    'yugioh', 'yu-gi-oh', 'pokemon', 'carta ', 'cartas ',
-    'boosters', 'booster', 'figuras', 'pegatinas',
-    # Hogar y otros
-    'copas', 'cristal', 'libro', 'libros', 'sorpresa', 'misterio',
-    'jogging', 'streetwear', 'vintage tela', 'tela ',
-    'camisolas', 'bodys', 'conjuntos ropa',
-    # Cosmética — toner facial / tónico
-    'tónico', 'tonico', 'facial', 'skincare', 'k-beauty', 'kbeauty',
-    'coreano', 'coreana', 'arroz', 'hair', 'cabello', 'pelo',
-    'micellar', 'hidratacion', 'hidratación', 'esencia toner',
-    'rice toner', 'barrier', 'glazer', 'pyunkang', 'revuele',
-    'sibari', 'kiehl', 'sisley', 'loreal', 'loreal',
-    'schwarzkopf', 'naturtint', 'decoloracion', 'decoloración',
-    'tinte pelo', 'tinte cabello', 'tintes peluqueria',
-    'neceser', 'muestras', 'muestra ',
-    # Videojuegos y electrónica
-    'nintendo', 'switch', 'gameboy', 'game boy', 'sega',
-    'famicom', 'gba', '3ds', 'sonic', 'kirby', 'dragon ball',
-    'mahjong', 'aladdin', 'rayman', 'astroboy', 'pokémon',
-    'pokemon', 'mega drive', 'super famicom', 'microfono',
-    'micrófono', 'camara', 'cámara', 'philips lumea',
-    # FR
+    # Consumibles no originales — confirmados por Tomás
+    'compatible', 'compatibles',
+    'reciclado', 'reciclados',
+    'remanufacturado', 'remanufacturados',
+    'relleno', 'rellenado', 'rellenar', 'refill',
+    'usado', 'usados',
+    'vacío', 'vacíos',
+    'generico', 'genericos',
+    # Intención de compra — no venden, buscan
+    'busco', 'se busca', 'compro', 'wanted',
+    # Cosmética — "toner" en belleza es un producto diferente
+    'tónico', 'tonico', 'facial', 'skincare',
+    'k-beauty', 'kbeauty', 'rice toner', 'esencia toner',
+    'serum', 'sérum', 'crema hidratante',
+    # FR/PT — no son impresión
     'recyclé', 'rechargé', 'remanufacturé', 'generique',
-    'cherche', 'recherche', 'vetement', 'vêtement', 'robe',
-    'ensemble bébé', 'pièces fille', 'pull ', 'blouse ',
-    'boutons couture', 'pellicule', 'porte-clés',
-    # Videojuegos
-    'cartucho juego', 'cartucho nintendo', 'cartucho sega',
-    'cartucho gba', 'cartucho nds', 'cartucho n64',
-    'playstation', 'ps1', 'ps2', 'ps3', 'ps4', 'ps5',
-    'xbox', 'game boy', 'gameboy', 'nds', 'gba', 'n64',
-    'snes', 'nes ', 'mega drive', 'master system',
-    'retro juego', 'videojuego', 'video juego',
-    # Móviles y fundas — "lote kyocera" da móviles
-    'funda', 'fundas', 'carcasa', 'movil', 'móvil', 'smartphone',
-    'iphone', 'samsung', 'nokia', 'motorola', 'huawei', 'xiaomi',
-    'telefono', 'teléfono', 'tablet',
-    # Moda adicional
-    'cazadora', 'esquí', 'esqui', 'chaqueta esqui',
-    'deportiva', 'running', 'trekking', 'ciclismo',
-    # Precios absurdos (señal de artículo incorrecto)
-    # No filtramos por precio pero añadimos palabras clave
-    'decoracion', 'decoración', 'cuadro', 'lampara', 'lámpara',
+    'cherche', 'recherche',
+    'vetement', 'vêtement', 'robe', 'jupe', 'chemise',
 ]
 
 # ── FILTRO DE PRECIO ──────────────────────────────────────────────────────────
