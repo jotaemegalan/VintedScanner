@@ -161,10 +161,37 @@ def guardar_vistos(vistos):
         vistos = dict(ordenados[-MAX_SEEN:])
     Path(SEEN_FILE).write_text(json.dumps(vistos))
 
+# ── PALABRAS QUE DEBEN APARECER EN EL TÍTULO ────────────────────────────────
+# Si el título no contiene ninguna de estas palabras, el anuncio se descarta
+# Esto evita que artículos de ropa/cosmética aparezcan por estar en la descripción
+POSITIVOS_TITULO = [
+    # Tipos de consumible
+    'toner', 'tóner', 'tonner', 'cartucho', 'cartuchos',
+    'tambor', 'drum', 'fusor', 'fuser', 'inkjet', 'laserjet',
+    # Marcas de impresión (solo relevantes en contexto de toners)
+    'hp laserjet', 'brother tn', 'brother dr', 'canon cexv',
+    'kyocera tk', 'ricoh', 'lexmark', 'xerox',
+    # Modelos específicos — si aparecen en título es 100% relevante
+    'cf226', 'cf410', 'ce505', 'cf283', 'ce390',
+    'tn910', 'tn326', 'tn3520', 'tn423', 'tn247',
+    'tk8115', 'tk5305', 'tk5240', 'tk5280', 'tk1170',
+    'c950x2', 'cexv34', 'cexv33', 'cexv21',
+    '407635', '842024', '406482',
+    # Términos de lote/impresión
+    'lote toner', 'lote cartuchos', 'lote consumibles',
+    'impresora original', 'consumible',
+]
+
 # ── FILTROS ───────────────────────────────────────────────────────────────────
-def tiene_negativo(titulo):
-    tl = titulo.lower()
+def tiene_negativo(texto):
+    tl = texto.lower()
     return any(neg in tl for neg in NEGATIVOS)
+
+def titulo_es_relevante(titulo):
+    """Verifica que el título contiene al menos una palabra de impresión.
+    Evita que artículos de ropa/cosmética pasen por estar en la descripción."""
+    tl = titulo.lower()
+    return any(pos in tl for pos in POSITIVOS_TITULO)
 
 def precio_valido(precio):
     return True  # Sin filtro de precio — Tomás decide
@@ -340,11 +367,19 @@ def main():
             # Filtros
             if not anuncio['titulo']:
                 continue
-            # Comprobar negativos en título Y descripción
+
+            # 1. El TÍTULO debe contener una palabra de impresión
+            # (evita ropa/cosmética que tiene "toner" en la descripción)
+            if not titulo_es_relevante(anuncio['titulo']):
+                log.info(f"Título irrelevante: {anuncio['titulo'][:60]}")
+                continue
+
+            # 2. Negativos en título Y descripción
             texto_completo = anuncio['titulo'] + ' ' + anuncio.get('descripcion', '')
             if tiene_negativo(texto_completo):
                 log.info(f"Filtrado negativo: {anuncio['titulo'][:50]}")
                 continue
+
             if not precio_valido(anuncio['precio']):
                 log.info(f"Filtrado precio ({anuncio['precio']}€): {anuncio['titulo'][:50]}")
                 continue
